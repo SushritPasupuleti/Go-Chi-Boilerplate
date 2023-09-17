@@ -46,7 +46,7 @@ func (app *Application) Serve() error {
 }
 // @title Swagger Example API
 // @version 1.0
-// @description This is a sample server Petstore server.
+// @description This is a sample server.
 // @termsOfService http://localhost:6000/terms/
 
 // @contact.name API Support

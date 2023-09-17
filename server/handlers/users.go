@@ -20,13 +20,14 @@ var user models.User
 
 // Get All Users
 //
-//	@Summary      Get all Users
-//	@Description  Get all Users
-//	@Tags         users
-//	@Accept       json
-//	@Produce      json
-//	@Router       /api/v1/users [get]
-//  @Success 200 {array} models.User
+//		@Summary      Get all Users
+//		@Description  Get all Users
+//		@Tags         users
+//		@Accept       json
+//		@Produce      json
+//		@Router       /api/v1/users [get]
+//	 @Success 200 {array} models.User
+//	 @Failure 500 {object} string
 func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := user.FindAll()
 
@@ -39,6 +40,16 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	helpers.WriteJSON(w, http.StatusOK, users)
 }
 
+// Create User
+//
+//		@Summary      Create User
+//		@Description  Create User
+//		@Tags         users
+//		@Accept       json
+//		@Produce      json
+//		@Router       /api/v1/users [post]
+//	 @Success 200 {object} models.User
+//	 @Failure 500 {object} string
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	var userData models.User
 
@@ -68,6 +79,17 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	helpers.WriteJSON(w, http.StatusOK, newUser)
 }
 
+// Find User By Email
+//
+//		@Summary      Find User By Email
+//		@Description  Find User By Email
+//		@Tags         users
+//		@Accept       json
+//		@Produce      json
+//		@Router       /api/v1/users/{email} [get]
+//	 @Param email path string true "Email"
+//	 @Success 200 {object} models.User
+//	 @Failure 500 {object} string
 func FindUserByEmail(w http.ResponseWriter, r *http.Request) {
 	email := chi.URLParam(r, "email")
 
@@ -82,6 +104,16 @@ func FindUserByEmail(w http.ResponseWriter, r *http.Request) {
 	helpers.WriteJSON(w, http.StatusOK, user)
 }
 
+// Update User By Email
+//
+//		@Summary      Update User By Email
+//		@Description  Update User By Email
+//		@Tags         users
+//		@Accept       json
+//		@Produce      json
+//		@Router       /api/v1/users [put]
+//	 @Success 200 {object} models.User
+//	 @Failure 500 {object} string
 func UpdateUserByEmail(w http.ResponseWriter, r *http.Request) {
 	var userData models.User
 
