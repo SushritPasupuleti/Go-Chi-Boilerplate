@@ -21,14 +21,14 @@ var user models.User
 
 // Get All Users
 //
-//	 @Summary      Get all Users
-//	 @Description  Get all Users
-//	 @Tags         users
-//	 @Accept       json
-//	 @Produce      json
-//	 @Router       /api/v1/users [get]
-//	 @Success 200 {array} models.User
-//	 @Failure 500 {object} string
+//	@Summary      Get all Users
+//	@Description  Get all Users
+//	@Tags         users
+//	@Accept       json
+//	@Produce      json
+//	@Router       /api/v1/users [get]
+//	@Success 200 {array} models.User
+//	@Failure 500 {object} string
 func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := user.FindAll()
 
@@ -43,14 +43,14 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 
 // Create User
 //
-//	 @Summary      Create User
-//	 @Description  Create User
-//	 @Tags         users
-//	 @Accept       json
-//	 @Produce      json
-//	 @Router       /api/v1/users [post]
-//	 @Success 200 {object} models.User
-//	 @Failure 500 {object} string
+//	@Summary      Create User
+//	@Description  Create User
+//	@Tags         users
+//	@Accept       json
+//	@Produce      json
+//	@Router       /api/v1/users [post]
+//	@Success 200 {object} models.User
+//	@Failure 500 {object} string
 func CreateUser(w http.ResponseWriter, r *http.Request) {
 	var userData models.User
 
@@ -109,17 +109,27 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 // Find User By Email
 //
-//	 @Summary      Find User By Email
-//	 @Description  Find User By Email
-//	 @Tags         users
-//	 @Accept       json
-//	 @Produce      json
-//	 @Router       /api/v1/users/{email} [get]
-//	 @Param email path string true "Email"
-//	 @Success 200 {object} models.User
-//	 @Failure 500 {object} string
+//	@Summary      Find User By Email
+//	@Description  Find User By Email
+//	@Tags         users
+//	@Accept       json
+//	@Produce      json
+//	@Router       /api/v1/users/{email} [get]
+//	@Param email path string true "Email"
+//	@Success 200 {object} models.User
+//	@Failure 500 {object} string
 func FindUserByEmail(w http.ResponseWriter, r *http.Request) {
 	email := chi.URLParam(r, "email")
+
+	validate := validator.New()
+
+	err := validate.Var(email, "required,email")
+
+	if err != nil {
+		helpers.MessageLogs.ErrorLog.Println(err)
+		helpers.ErrorJSON(w, errors.New("Invalid email"), http.StatusBadRequest)
+		return
+	}
 
 	user, err := user.FindByEmail(email)
 
@@ -134,14 +144,14 @@ func FindUserByEmail(w http.ResponseWriter, r *http.Request) {
 
 // Update User By Email
 //
-//	 @Summary      Update User By Email
-//	 @Description  Update User By Email
-//	 @Tags         users
-//	 @Accept       json
-//	 @Produce      json
-//	 @Router       /api/v1/users [put]
-//	 @Success 200 {object} models.User
-//	 @Failure 500 {object} string
+//	@Summary      Update User By Email
+//	@Description  Update User By Email
+//	@Tags         users
+//	@Accept       json
+//	@Produce      json
+//	@Router       /api/v1/users [put]
+//	@Success 200 {object} models.User
+//	@Failure 500 {object} string
 func UpdateUserByEmail(w http.ResponseWriter, r *http.Request) {
 	var userData models.User
 
@@ -151,6 +161,33 @@ func UpdateUserByEmail(w http.ResponseWriter, r *http.Request) {
 		helpers.MessageLogs.ErrorLog.Println(err)
 		helpers.ErrorJSON(w, errors.New("Invalid JSON"), http.StatusBadRequest)
 		return
+	}
+
+	validate := validator.New()
+
+	err = validate.Struct(userData)
+
+	var validationErrors []string
+
+	if err != nil {
+
+		for _, err := range err.(validator.ValidationErrors) {
+			helpers.MessageLogs.ErrorLog.Println("Error: ", err)
+
+			validationErrors = append(validationErrors, err.Error())
+		}
+
+		if len(validationErrors) > 0 {
+
+			var errorMessages string
+
+			for _, err := range validationErrors {
+				errorMessages += err + "\n"
+			}
+
+			helpers.ErrorJSON(w, errors.New(errorMessages), http.StatusBadRequest)
+			return
+		}
 	}
 
 	err = user.UpdateByEmail(userData)
