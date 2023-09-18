@@ -12,6 +12,7 @@ import (
 	"server/models"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-playground/validator/v10"
 	// "server/types"
 	// "github.com/go-chi/chi/v5"
 )
@@ -20,12 +21,12 @@ var user models.User
 
 // Get All Users
 //
-//		@Summary      Get all Users
-//		@Description  Get all Users
-//		@Tags         users
-//		@Accept       json
-//		@Produce      json
-//		@Router       /api/v1/users [get]
+//	 @Summary      Get all Users
+//	 @Description  Get all Users
+//	 @Tags         users
+//	 @Accept       json
+//	 @Produce      json
+//	 @Router       /api/v1/users [get]
 //	 @Success 200 {array} models.User
 //	 @Failure 500 {object} string
 func GetAllUsers(w http.ResponseWriter, r *http.Request) {
@@ -42,12 +43,12 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 
 // Create User
 //
-//		@Summary      Create User
-//		@Description  Create User
-//		@Tags         users
-//		@Accept       json
-//		@Produce      json
-//		@Router       /api/v1/users [post]
+//	 @Summary      Create User
+//	 @Description  Create User
+//	 @Tags         users
+//	 @Accept       json
+//	 @Produce      json
+//	 @Router       /api/v1/users [post]
 //	 @Success 200 {object} models.User
 //	 @Failure 500 {object} string
 func CreateUser(w http.ResponseWriter, r *http.Request) {
@@ -68,6 +69,33 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	validate := validator.New()
+
+	err = validate.Struct(userData)
+
+	var validationErrors []string
+
+	if err != nil {
+
+		for _, err := range err.(validator.ValidationErrors) {
+			helpers.MessageLogs.ErrorLog.Println("Error: ", err)
+
+			validationErrors = append(validationErrors, err.Error())
+		}
+
+		if len(validationErrors) > 0 {
+
+			var errorMessages string
+
+			for _, err := range validationErrors {
+				errorMessages += err + "\n"
+			}
+
+			helpers.ErrorJSON(w, errors.New(errorMessages), http.StatusBadRequest)
+			return
+		}
+	}
+
 	newUser, err := user.Create(userData)
 
 	if err != nil {
@@ -81,12 +109,12 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 // Find User By Email
 //
-//		@Summary      Find User By Email
-//		@Description  Find User By Email
-//		@Tags         users
-//		@Accept       json
-//		@Produce      json
-//		@Router       /api/v1/users/{email} [get]
+//	 @Summary      Find User By Email
+//	 @Description  Find User By Email
+//	 @Tags         users
+//	 @Accept       json
+//	 @Produce      json
+//	 @Router       /api/v1/users/{email} [get]
 //	 @Param email path string true "Email"
 //	 @Success 200 {object} models.User
 //	 @Failure 500 {object} string
@@ -106,12 +134,12 @@ func FindUserByEmail(w http.ResponseWriter, r *http.Request) {
 
 // Update User By Email
 //
-//		@Summary      Update User By Email
-//		@Description  Update User By Email
-//		@Tags         users
-//		@Accept       json
-//		@Produce      json
-//		@Router       /api/v1/users [put]
+//	 @Summary      Update User By Email
+//	 @Description  Update User By Email
+//	 @Tags         users
+//	 @Accept       json
+//	 @Produce      json
+//	 @Router       /api/v1/users [put]
 //	 @Success 200 {object} models.User
 //	 @Failure 500 {object} string
 func UpdateUserByEmail(w http.ResponseWriter, r *http.Request) {
