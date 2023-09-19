@@ -3,6 +3,9 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+
+	// "go/format"
 
 	// "log"
 	// "io/ioutil"
@@ -100,7 +103,11 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		helpers.MessageLogs.ErrorLog.Println(err)
-		helpers.ErrorJSON(w, errors.New("Error creating user"), http.StatusInternalServerError)
+
+		errorMessage := fmt.Sprintf("Error creating user - Reason: %v", err)
+
+		// helpers.ErrorJSON(w, errors.New("Error creating user \nReason: "), http.StatusInternalServerError)
+		helpers.ErrorJSON(w, errors.New(errorMessage), http.StatusInternalServerError)
 		return
 	}
 
