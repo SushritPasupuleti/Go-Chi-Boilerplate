@@ -1,3 +1,4 @@
+// Structs and functions for the DB models
 package models
 
 import (

@@ -1,3 +1,5 @@
+// Handles Database connection establishment
+// and Session management
 package db
 
 import (

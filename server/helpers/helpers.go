@@ -25,6 +25,7 @@ var MessageLogs = &Message{
 	ErrorLog: errorLog,
 }
 
+//ReadJSON reads the request body and decodes it into the data interface
 func ReadJSON(w http.ResponseWriter, r *http.Request, data interface{}) error {
 	maxBytes := 1048576
 	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
@@ -42,6 +43,7 @@ func ReadJSON(w http.ResponseWriter, r *http.Request, data interface{}) error {
 	return nil
 }
 
+//WriteJSON writes the data interface to the response writer
 func WriteJSON(w http.ResponseWriter, status int, data interface{}, headers ...http.Header) error {
 	out, err := json.MarshalIndent(data, "", "\t")
 	if err != nil {
@@ -62,6 +64,7 @@ func WriteJSON(w http.ResponseWriter, status int, data interface{}, headers ...h
 	return nil
 }
 
+//WriteJSON writes the data interface to the response writer
 func ErrorJSON(w http.ResponseWriter, err error, status ...int) {
 	statusCode := http.StatusBadRequest
 	if len(status) > 0 {
@@ -71,4 +74,24 @@ func ErrorJSON(w http.ResponseWriter, err error, status ...int) {
 	payload.Error = true
 	payload.Message = err.Error()
 	WriteJSON(w, statusCode, payload)
+}
+
+//`Contains` checks if an element is in an array
+func Contains[T comparable](arr []T, x T) bool {
+	for _, v := range arr {
+		if v == x {
+			return true
+		}
+	}
+	return false
+}
+
+func InterfaceArrayToStringArray(arr []interface{}) []string {
+	var stringArr []string
+
+	for _, v := range arr {
+		stringArr = append(stringArr, v.(string))
+		// println("InterfaceArrayToStringArray: v=", arr[i])
+	}
+	return stringArr
 }

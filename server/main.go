@@ -35,7 +35,7 @@ func (app *Application) Serve() error {
 		return err
 	}
 
-	log.Printf("Listening on port %s", port)
+	log.Printf("🚀 Server listening on port %s", port)
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%s", port),
@@ -59,8 +59,6 @@ func (app *Application) Serve() error {
 // @host localhost:5000
 // @BasePath /
 func main() {
-	fmt.Println("Hello there!")
-
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
