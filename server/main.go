@@ -7,9 +7,11 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/redis/go-redis/v9"
 	"server/db"
 	"server/logging"
 	"server/models"
+	rc "server/redis"
 	"server/routes"
 
 	"github.com/joho/godotenv"
@@ -23,6 +25,7 @@ type Config struct {
 type Application struct {
 	Config Config
 	Models models.Models
+	Redis  *redis.Client
 }
 
 func (app *Application) Serve() error {
@@ -88,11 +91,21 @@ func main() {
 
 	defer dbConn.DB.Close()
 
+	redisClient, err := rc.InitRedisClient()
+	if err != nil {
+		log.Fatal().
+			Err(err).
+			Msg("Error connecting to Redis")
+	}
+
+	defer redisClient.Close()
+
 	app := Application{
 		Config: Config{
 			Port: os.Getenv("PORT"),
 		},
 		Models: models.New(dbConn.DB),
+		Redis:  redisClient,
 	}
 
 	err = app.Serve()

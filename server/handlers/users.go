@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	// "context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	// "time"
 
 	// "go/format"
 
@@ -12,10 +14,13 @@ import (
 	"net/http"
 
 	"server/helpers"
+	"server/middleware"
 	"server/models"
+	"server/redis"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
+	"github.com/rs/zerolog/log"
 	// "server/types"
 	// "github.com/go-chi/chi/v5"
 )
@@ -41,6 +46,36 @@ func GetAllUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	r_ := r
+
+	middleware.SaveToCache(r_, users)
+	routeKey, err := middleware.PrepareRouteKey(r_)
+	if err != nil {
+		log.Error().Msgf("Error preparing route key: %v", err)
+	}
+	cacheKey, err := middleware.PrepareCacheKey(r.Body, routeKey)
+	if err != nil {
+		log.Error().Msgf("Error preparing cache key: %v", err)
+	}
+
+	cachedResponseRAW, err := redis.GetCache(cacheKey)
+	if err != nil {
+		log.Error().Msgf("Error getting cache: %v", err)
+	}
+
+	log.Info().Msgf("cachedResponseRAW: %v", cachedResponseRAW)
+
+	cachedResponse, err := middleware.CachedResponseToJSON(cacheKey)
+	if err != nil {
+		log.Error().Msgf("Error getting cache: %v", err)
+	}
+
+	if err == nil {
+		log.Info().Msgf("Sending CachedResponse %v", cachedResponse)
+		helpers.WriteJSON(w, http.StatusOK, cachedResponse)
+		return
+	}
+
 	helpers.WriteJSON(w, http.StatusOK, users)
 }
 
@@ -58,17 +93,28 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	var userData models.User
 
 	// log.Println("Body: ", r.Body)
-	helpers.MessageLogs.InfoLog.Println("Body: ", r.Body)
+	// helpers.MessageLogs.InfoLog.Println("Body: ", r.Body)
+	// log.Info().Msgf("Route: %s", r.URL.Path)
+	// log.Info().Msgf("Method: %s", r.Method)
+	// log.Info().Msgf("Body: %t", r.Body)
+
+	// key, errKey := middleware.PrepareCacheKey(r.Body, r.URL.Path, r.Method)
+	//
+	// if errKey != nil {
+	// 	log.Error().Msgf("Error preparing cache key: %v", errKey)
+	// }
+
+	// log.Info().Msgf("key: %v", key)
 
 	err := json.NewDecoder(r.Body).Decode(&userData)
 	// body, err := ioutil.ReadAll(r.Body)
 	// err = json.Unmarshal(body, &userData)
 
-	helpers.MessageLogs.InfoLog.Println("userData", userData)
+	log.Info().Msgf("userData: %v", userData)
 
 	if err != nil {
 		helpers.MessageLogs.ErrorLog.Println(err)
-		helpers.ErrorJSON(w, errors.New("Invalid JSON"), http.StatusBadRequest)
+		helpers.ErrorJSON(w, err, http.StatusBadRequest)
 		return
 	}
 
@@ -127,6 +173,19 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 //	@Failure 500 {object} string
 func FindUserByEmail(w http.ResponseWriter, r *http.Request) {
 	email := chi.URLParam(r, "email")
+
+	// queryParams := r.URL.Query()
+
+	// log.Info().Msgf("urlParams: %v", r.URL.RawQuery)
+	// log.Info().Msgf("urlParams: %v", r.URL.Path)
+
+	// log.Info().Msgf("queryParams: %v", queryParams)
+
+	// ctx, cancel := context.WithTimeout(context.Background(), 5)
+	// set, errx := redisClient.SetNX(ctx, "key", "value", 10*time.Second).Result()
+	//
+	// log.Info().Msgf("set: %v", set)
+	// log.Info().Msgf("errx: %v", errx)
 
 	validate := validator.New()
 
