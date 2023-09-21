@@ -4,8 +4,7 @@ package db
 
 import (
 	"database/sql"
-	"fmt"
-	// "log"
+	"github.com/rs/zerolog/log"
 	"time"
 
 	// "fmt"
@@ -55,6 +54,6 @@ func PingDB(db *sql.DB) error {
 		return err
 	}
 
-	fmt.Println("Successfully connected to database", db.Stats().InUse)
+	log.Info().Msgf("Successfully connected to database %d", db.Stats().InUse)
 	return nil
 }

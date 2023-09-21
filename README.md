@@ -4,7 +4,7 @@ Creating boilerplate for Go-chi with some good defaults.
 
 ## Features
 
-- [ ] Logging with [zerolog](https://https://github.com/rs/zerolog)
+- [x] Logging with [zerolog](https://https://github.com/rs/zerolog)
 - [x] Routing with [go-chi](https://go-chi.io/)
 - [x] OpenAPI with [go-swagger](https://github.com/swaggo/swag)
 - [x] Input validation with [go-playground/validator](https://github.com/go-playground/validator)
@@ -20,12 +20,13 @@ Creating boilerplate for Go-chi with some good defaults.
 ### Install dependencies
 
 ```bash
-go mod tidy
+cd server
+make packages_install
 ```
 
 ### Run
 
 ```bash
 cd server
-go run main.go
+make run
 ```

@@ -3,7 +3,7 @@ package models
 import (
 	"context"
 	"errors"
-	"log"
+	"github.com/rs/zerolog/log"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -44,7 +44,7 @@ func (u *User) Create(user User) (*User, error) {
 	)
 
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err).Msg("Error creating user")
 		return nil, err
 	}
 
@@ -60,7 +60,7 @@ func (u *User) FindAll() ([]*User, error) {
 
 	rows, err := db.QueryContext(ctx, query)
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err).Msg("Error finding users")
 		return nil, err
 	}
 
@@ -69,7 +69,7 @@ func (u *User) FindAll() ([]*User, error) {
 		var user User
 		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt)
 		if err != nil {
-			log.Println(err)
+			log.Error().Err(err).Msg("Error scanning users")
 			return nil, err
 		}
 
@@ -92,7 +92,7 @@ func (u *User) FindByEmail(email string) (*User, error) {
 
 	rows, err := db.QueryContext(ctx, query, email)
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err).Msg("Error finding user")
 		return nil, err
 	}
 
@@ -101,7 +101,7 @@ func (u *User) FindByEmail(email string) (*User, error) {
 		var user User
 		err := rows.Scan(&user.ID, &user.Name, &user.Email, &user.Password, &user.CreatedAt, &user.UpdatedAt)
 		if err != nil {
-			log.Println(err)
+			log.Error().Err(err).Msg("Error scanning user")
 			return nil, err
 		}
 
@@ -131,7 +131,7 @@ func (u *User) UpdateByEmail(user User) error {
 
 	_, err := db.ExecContext(ctx, query, user.Name, user.Email, user.Password, time.Now(), user.Email)
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err).Msg("Error updating user")
 		return err
 	}
 

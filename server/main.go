@@ -1,16 +1,19 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"log"
+	// "log"
 	"net/http"
 	"os"
 
 	"server/db"
+	"server/logging"
 	"server/models"
 	"server/routes"
 
 	"github.com/joho/godotenv"
+	"github.com/rs/zerolog/log"
 )
 
 type Config struct {
@@ -25,13 +28,17 @@ type Application struct {
 func (app *Application) Serve() error {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal().
+			Err(errors.New("Error loading .env file")).
+			Msg("Error loading .env file")
 		return err
 	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		log.Fatal("$PORT must be set")
+		log.Fatal().
+			Err(errors.New("$PORT must be set")).
+			Msg("$PORT must be set")
 		return err
 	}
 
@@ -44,6 +51,7 @@ func (app *Application) Serve() error {
 
 	return srv.ListenAndServe()
 }
+
 // @title Swagger Example API
 // @version 1.0
 // @description This is a sample server.
@@ -59,16 +67,23 @@ func (app *Application) Serve() error {
 // @host localhost:5000
 // @BasePath /
 func main() {
+
+	logging.InitLogging()
+
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal().
+			Err(errors.New("Error loading .env file")).
+			Msg("Error loading .env file")
 	}
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"))
 
 	dbConn, err := db.Connect(dsn)
 	if err != nil {
-		log.Fatal("Error connecting to database", err)
+		log.Fatal().
+			Err(err).
+			Msg("Error connecting to database")
 	}
 
 	defer dbConn.DB.Close()
@@ -82,6 +97,8 @@ func main() {
 
 	err = app.Serve()
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().
+			Err(err).
+			Msg("Error starting server")
 	}
 }
