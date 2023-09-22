@@ -11,7 +11,7 @@ import (
 
 var ctx = context.Background()
 var redisClient *redis.Client
-var defaultExpiration = (60 * 60 * 24) * time.Second
+var DefaultTTL = (60 * 60 * 24) * time.Second
 
 // Initialize Redis Client Connection and return client
 func InitRedisClient() (*redis.Client, error) {
@@ -49,7 +49,7 @@ func Test() {
 func SetCache(key string, value string, ttl time.Duration) error {
 
 	if ttl == 0 {
-		ttl = defaultExpiration
+		ttl = DefaultTTL
 	}
 
 	set, err := redisClient.SetNX(ctx, key, value, ttl).Result()
@@ -70,7 +70,7 @@ func GetCache(key string) (string, error) {
 
 	if err != nil {
 		log.Error().Err(err).Msg("Error getting key")
-		return "", err
+		return "", nil
 	}
 
 	log.Info().Msgf("value: %v", value)

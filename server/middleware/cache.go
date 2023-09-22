@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"server/helpers"
 	"server/redis"
+	"time"
 
 	"github.com/rs/zerolog/log"
 )
@@ -59,6 +61,7 @@ func StringifyResponse(response interface{}) (string, error) {
 	return string(stringResponse), nil
 }
 
+// Save the response to cache after stringifying it
 func SaveToCache(r *http.Request, response interface{}) (string, error) {
 
 	// Prepare the cache key
@@ -69,6 +72,7 @@ func SaveToCache(r *http.Request, response interface{}) (string, error) {
 		return "", err
 	}
 
+	log.Info().Msgf("Body: %v", r.Body)
 	// Prepare the cache key
 	cacheKey, err := PrepareCacheKey(r.Body, routeKey)
 
@@ -93,13 +97,12 @@ func SaveToCache(r *http.Request, response interface{}) (string, error) {
 		return "", err
 	}
 
-	//TODO: REMOVE LATER
-	// CachedResponseToJSON(cacheKey)
+	log.Info().Msgf("Successfully saved to cache: %s", cacheKey)
 
 	return cacheKey, nil
 }
 
-// func CachedResponseToJSON(cacheKey string) (interface{}, error) {
+// Get the cached response and convert it to JSON
 func CachedResponseToJSON(cacheKey string) ([]map[string]interface{}, error) {
 
 	// Get from cache
@@ -107,13 +110,18 @@ func CachedResponseToJSON(cacheKey string) ([]map[string]interface{}, error) {
 
 	if err != nil {
 		log.Fatal().Err(err).Msg("Error getting from cache")
-		return nil, err
+		return nil, nil
+	}
+
+	if cachedResponse == "" {
+		log.Info().Msgf("No cached response found for %s", cacheKey)
+		return nil, nil
 	}
 
 	log.Info().Msgf("cachedResponse: %s", cachedResponse)
 
 	var cachedResponseJSON []map[string]interface{}
-	// var cachedResponseJSON interface{} 
+	// var cachedResponseJSON interface{}
 
 	err = json.Unmarshal([]byte(cachedResponse), &cachedResponseJSON)
 
@@ -126,4 +134,46 @@ func CachedResponseToJSON(cacheKey string) ([]map[string]interface{}, error) {
 	// log.Info().Msgf("cachedResponseJSON: %t", cachedResponseJSON)
 
 	return cachedResponseJSON, nil
+}
+
+// redis cache middleware
+func CacheMiddleware(ttl time.Duration) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if ttl == 0 {
+				ttl = redis.DefaultTTL
+			}
+
+			routeKey, err := PrepareRouteKey(r)
+			if err != nil {
+				log.Fatal().Err(err).Msg("Error preparing route key")
+				return
+			}
+
+			cacheKey, err := PrepareCacheKey(r.Body, routeKey)
+			if err != nil {
+				log.Fatal().Err(err).Msg("Error preparing cache key")
+				return
+			}
+
+			cachedResponseJSON, err := CachedResponseToJSON(cacheKey)
+			if err != nil {
+				log.Fatal().Err(err).Msg("Error getting cached response")
+				return
+			}
+
+			if cachedResponseJSON == nil {
+				log.Info().Msgf("No cached response found for %s", cacheKey)
+				// return
+				next.ServeHTTP(w, r)
+			}
+
+			if len(cachedResponseJSON) > 0 {
+				log.Info().Msgf("Sending CachedResponse %v", cachedResponseJSON)
+				helpers.WriteJSON(w, http.StatusOK, cachedResponseJSON)
+				return
+			}
+		})
+	}
 }
