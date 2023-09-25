@@ -1,49 +1,31 @@
 package main
 
 import (
-	"errors"
+	// "errors"
 	"fmt"
 	// "log"
 	"net/http"
-	"os"
+	// "os"
 
 	"github.com/redis/go-redis/v9"
 	"server/db"
+	"server/env"
 	"server/logging"
 	"server/models"
 	rc "server/redis"
 	"server/routes"
 
-	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
 )
 
-type Config struct {
-	Port string
-}
-
 type Application struct {
-	Config Config
+	Config env.Config
 	Models models.Models
 	Redis  *redis.Client
 }
 
 func (app *Application) Serve() error {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal().
-			Err(errors.New("Error loading .env file")).
-			Msg("Error loading .env file")
-		return err
-	}
-
-	port := os.Getenv("PORT")
-	if port == "" {
-		log.Fatal().
-			Err(errors.New("$PORT must be set")).
-			Msg("$PORT must be set")
-		return err
-	}
+	port := app.Config.PORT
 
 	log.Printf("🚀 Server listening on port %s", port)
 
@@ -53,6 +35,11 @@ func (app *Application) Serve() error {
 	}
 
 	return srv.ListenAndServe()
+}
+
+func init() {
+	env.Load()
+	logging.InitLogging()
 }
 
 // @title Swagger Example API
@@ -70,17 +57,7 @@ func (app *Application) Serve() error {
 // @host localhost:5000
 // @BasePath /
 func main() {
-
-	logging.InitLogging()
-
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal().
-			Err(errors.New("Error loading .env file")).
-			Msg("Error loading .env file")
-	}
-
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", os.Getenv("DB_HOST"), os.Getenv("DB_PORT"), os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD"), os.Getenv("DB_NAME"))
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", env.DefaultConfig.DB_HOST, env.DefaultConfig.DB_PORT, env.DefaultConfig.DB_USER, env.DefaultConfig.DB_PASSWORD, env.DefaultConfig.DB_NAME)
 
 	dbConn, err := db.Connect(dsn)
 	if err != nil {
@@ -101,9 +78,7 @@ func main() {
 	defer redisClient.Close()
 
 	app := Application{
-		Config: Config{
-			Port: os.Getenv("PORT"),
-		},
+		Config: env.DefaultConfig,
 		Models: models.New(dbConn.DB),
 		Redis:  redisClient,
 	}
@@ -115,3 +90,4 @@ func main() {
 			Msg("Error starting server")
 	}
 }
+

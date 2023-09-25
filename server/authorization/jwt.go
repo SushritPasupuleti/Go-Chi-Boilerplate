@@ -8,9 +8,9 @@ import (
 	"github.com/joho/godotenv"
 )
 
-//Initializes a JWTAuth instance with the secret from the .env file
-//Returns a pointer to the JWTAuth instance
-//Ensure that a `JWT_SECRET` environment variable is set
+// Initializes a JWTAuth instance with the secret from the .env file
+// Returns a pointer to the JWTAuth instance
+// Ensure that a `JWT_SECRET` environment variable is set
 func InitJWTAuth() *jwtauth.JWTAuth {
 	err := godotenv.Load()
 	if err != nil {

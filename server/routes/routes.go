@@ -12,7 +12,6 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/go-chi/jwtauth/v5"
 
-	// "github.com/joho/godotenv"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
 	"server/authorization"

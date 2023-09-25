@@ -12,7 +12,7 @@ import (
 )
 
 var db *sql.DB
-const dbTimeout = 5 * time.Second
+const dbTimeout = 60 * time.Second
 
 type Models struct {
 	Users User
