@@ -23,13 +23,15 @@ func (u *User) Create(user User) (*User, error) {
 
 	defer cancel()
 
-	//TODO: Check for duplicate
-
+	// Check if user already exists
 	dupe, err := u.FindByEmail(user.Email)
 
 	if dupe != nil {
 		return nil, errors.New("User already exists")
 	}
+
+	// Create user
+	//TODO: Hash password
 
 	query := `INSERT INTO users (name, email, password, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING *`
 

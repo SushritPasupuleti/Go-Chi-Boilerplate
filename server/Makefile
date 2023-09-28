@@ -6,7 +6,14 @@ run:
 
 build:
 	@echo "Building server..."
-	@go build -o bin/server main.go
+	@GOOS=linux GOARCH=amd64 go build -o bin/server main.go 
+	@GOOS=windows GOARCH=amd64 go build -o bin/server.exe main.go
+	@GOOS=darwin GOARCH=amd64 go build -o bin/server.darwin main.go
+	@echo "Done building for linux, windows and mac (x64 only)"
+
+test:
+	@echo "Running tests..."
+	@go test -v ./...
 
 migrate_up:
 	@echo "Migrating up..."
