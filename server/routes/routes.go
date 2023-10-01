@@ -3,7 +3,7 @@ package routes
 
 import (
 	"fmt"
-	"time"
+	// "time"
 	// "log"
 	"net/http"
 	// "os"
@@ -12,7 +12,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/jwtauth/v5"
-	"github.com/go-chi/oauth"
+	// "github.com/go-chi/oauth"
 
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 
@@ -46,13 +46,11 @@ func Routes() http.Handler {
 	}))
 
 	// OAuth2 INFO: Should be run as a separate service in production
-	s := oauth.NewBearerServer(
-		"mySecretKey-10101",
-		time.Second*120,
-		&authentication.UserVerifier{},
-		nil)
-	router.Post("/token", s.UserCredentials)
-	router.Post("/auth", s.ClientCredentials)
+	router.Group(func(r chi.Router) {
+		router.Route("/oauth", func(r chi.Router) {
+			r.Post("/token", authentication.GenerateToken)
+		})
+	})
 
 	router.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("API is up and running"))

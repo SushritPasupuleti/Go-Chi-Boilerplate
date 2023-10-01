@@ -12,11 +12,11 @@ Creating boilerplate for Go-chi with some good defaults.
 - [x] Custom Redis Cache Middleware with [go-redis](https://github.com/redis/go-redis)
   - [ ] Optional: Memcached implementation
 - [ ] OAuth 2.0 client.
-  - [ ] Token Grant
+  - [x] Token Grant
+  - [x] Token Validation + RBAC
   - [ ] Token Refresh
   - [ ] Token Revoke
 - [x] JWT authentication.
-- [ ] RBAC, ABAC with [casbin](https://pkg.go.dev/github.com/casbin/casbin/v2)
 
 ## Setup
 

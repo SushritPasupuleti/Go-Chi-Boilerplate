@@ -2,59 +2,109 @@
 package authentication
 
 import (
+	"encoding/json"
 	"errors"
-	"github.com/go-chi/oauth"
 	"net/http"
+	"server/env"
+	"server/helpers"
+	"server/models"
+	"time"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/rs/zerolog/log"
 )
 
-type UserVerifier struct {
+type UserAuth struct {
+	Username string `json:"username" validate:"required"`
+	Password string `json:"password" validate:"required"`
+	Scope    string `json:"scope,omitempty"`
 }
 
-// VerifyUser is a method that verifies a user's credentials
-func (*UserVerifier) ValidateUser(username, password, scope string, r *http.Request) error {
+//Generates a JWT token for the user
+func GenerateToken(w http.ResponseWriter, r *http.Request) {
+	var user UserAuth
+
+	err := json.NewDecoder(r.Body).Decode(&user)
+
+	if err != nil {
+		log.Error().Err(err).Msg("Error decoding user")
+		helpers.ErrorJSON(w, err, http.StatusBadRequest)
+		return
+	}
+
+	validate := validator.New()
+
+	err = validate.Struct(user)
+
+	var validationErrors []string
+
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			log.Error().Err(err).Msg("Error validating user")
+
+			validationErrors = append(validationErrors, err.Error())
+		}
+
+		if len(validationErrors) > 0 {
+			var errorMessages string
+
+			for _, errorMessage := range validationErrors {
+				errorMessages += errorMessage + "\n"
+			}
+
+			helpers.ErrorJSON(w, errors.New(errorMessages), http.StatusBadRequest)
+			return
+		}
+	}
+
 	//TODO: implement user validation from database
-	if len(username) > 0 && len(password) > 0 {
-		return nil
+	if len(user.Username) > 0 && len(user.Password) > 0 {
+		//create token
+		var token models.JWTClaims = models.JWTClaims{
+			Email: user.Username,
+			AppMetadata: models.AppMetadata{
+				Authorization: models.Authorization{
+					//TODO: Add roles from database
+					Roles: []string{"user"},
+				},
+			},
+			Subject:    user.Username,
+			Audience:   "HOST", //TODO: Add audience from env
+			Expiration: time.Now().Add(time.Hour * 24).Unix(),
+			IssuedAt:   time.Now().Unix(),
+			//TODO: Generate JWTID from database
+		}
+
+		log.Info().Msgf("token: %v", token)
+
+		//Create JWT token
+		jwtToken := jwt.New(jwt.GetSigningMethod("HS256"))
+
+		jwtToken.Claims = token
+
+		signedToken, err := jwtToken.SignedString([]byte(env.DefaultConfig.JWT_SECRET))
+
+		if err != nil {
+			log.Error().Err(err).Msg("Error signing token")
+			helpers.ErrorJSON(w, err, http.StatusInternalServerError)
+			return
+		}
+
+		log.Info().Msgf("signedToken: %v", signedToken)
+
+		response := struct {
+			AccessToken        string `json:"access_token"`
+			RefreshToken string `json:"refresh_token"`
+		}{
+			AccessToken:        signedToken,
+			RefreshToken: "",
+		}
+
+		helpers.WriteJSON(w, http.StatusOK, response)
+		return
 	}
 
-	return errors.New("wrong user")
-}
-
-// ValidateClient validates clientID and secret returning an error if the client credentials are wrong
-func (*UserVerifier) ValidateClient(clientID, clientSecret, scope string, r *http.Request) error {
-	//TODO: implement client validation from database
-	if len(clientID) > 0 && len(clientSecret) > 0 {
-		return nil
-	}
-
-	return errors.New("wrong client")
-}
-
-// ValidateCode validates token ID
-func (*UserVerifier) ValidateCode(clientID, clientSecret, code, redirectURI string, r *http.Request) (string, error) {
-	return "", nil
-}
-
-// AddClaims provides additional claims to the token
-func (*UserVerifier) AddClaims(tokenType oauth.TokenType, credential, tokenID, scope string, r *http.Request) (map[string]string, error) {
-	claims := make(map[string]string)
-	//TODO: Add claims from database
-	return claims, nil
-}
-
-// AddProperties provides additional information to the token response
-func (*UserVerifier) AddProperties(tokenType oauth.TokenType, credential, tokenID, scope string, r *http.Request) (map[string]string, error) {
-	props := make(map[string]string)
-	//TODO: Add properties from database
-	return props, nil
-}
-
-// ValidateTokenID validates token ID
-func (*UserVerifier) ValidateTokenID(tokenType oauth.TokenType, credential, tokenID, refreshTokenID string) error {
-	return nil
-}
-
-// StoreTokenID saves the token id generated for the user
-func (*UserVerifier) StoreTokenID(tokenType oauth.TokenType, credential, tokenID, refreshTokenID string) error {
-	return nil
+	helpers.ErrorJSON(w, errors.New("Invalid Credentials Passed"), http.StatusBadRequest)
+	return
 }
