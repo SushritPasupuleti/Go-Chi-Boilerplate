@@ -5,6 +5,8 @@ import (
 	"context"
 	"net/http"
 
+	"time"
+
 	"github.com/rs/zerolog/log"
 
 	"server/authorization"
@@ -21,10 +23,31 @@ func init() {
 }
 
 // Extracts the claims from the JWT token and adds them to the context
+// Returns 401 if token is expired
 func RBACMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		_, claims, _ := jwtauth.FromContext(r.Context())
 		ctx := context.WithValue(r.Context(), "claims", claims)
+
+		exp := claims["exp"].(time.Time).Unix()
+		now := time.Now().Unix()
+		// log.Info().Msgf("RBACMiddleware: exp=%v\n", exp)
+		// log.Info().Msgf("RBACMiddleware: now=%v\n", now)
+
+		if exp < now {
+			log.Info().Msgf("RBACMiddleware: token expired\n")
+
+			un := struct {
+				Error   bool   `json:"error"`
+				Message string `json:"message"`
+			}{
+				Error:   true,
+				Message: "Token expired.",
+			}
+
+			helpers.WriteJSON(w, http.StatusUnauthorized, un)
+			return
+		}
 
 		scope := claims["app_metadata"].(map[string]interface{})["authorization"] //.(map[string]interface{})["roles"]
 
@@ -69,14 +92,14 @@ func RBACMiddlewareProtectedRoute(scopeRequired string) func(http.Handler) http.
 				log.Info().Msgf("RBACMiddlewareProtectedRoute: scopeRequired=%v not found in scope=%v\n", scopeRequired, scope)
 
 				un := struct {
-					Error   bool `json:"error"`
+					Error   bool   `json:"error"`
 					Message string `json:"message"`
 				}{
 					Error:   true,
 					Message: "You do not have the required scope to access this resource.",
 				}
 
-				helpers.WriteJSON(w, http.StatusUnauthorized, un)
+				helpers.WriteJSON(w, http.StatusForbidden, un)
 				return
 			}
 

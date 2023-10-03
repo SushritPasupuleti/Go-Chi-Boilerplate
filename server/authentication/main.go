@@ -21,7 +21,7 @@ type UserAuth struct {
 	Scope    string `json:"scope,omitempty"`
 }
 
-//Generates a JWT token for the user
+// Generates a JWT token for the user
 func GenerateToken(w http.ResponseWriter, r *http.Request) {
 	var user UserAuth
 
@@ -94,10 +94,10 @@ func GenerateToken(w http.ResponseWriter, r *http.Request) {
 		log.Info().Msgf("signedToken: %v", signedToken)
 
 		response := struct {
-			AccessToken        string `json:"access_token"`
+			AccessToken  string `json:"access_token"`
 			RefreshToken string `json:"refresh_token"`
 		}{
-			AccessToken:        signedToken,
+			AccessToken:  signedToken,
 			RefreshToken: "",
 		}
 
