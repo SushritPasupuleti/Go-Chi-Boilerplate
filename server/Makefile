@@ -26,3 +26,6 @@ packages_install:
 packages_update:
 	@echo "Updating packages..."
 	@go get -u
+
+dev:
+	@air
