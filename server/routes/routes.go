@@ -3,7 +3,7 @@ package routes
 
 import (
 	"fmt"
-	// "time"
+	"time"
 	// "log"
 	"net/http"
 	// "os"
@@ -11,7 +11,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/go-chi/httprate"
 	"github.com/go-chi/jwtauth/v5"
+
 	// "github.com/go-chi/oauth"
 
 	httpSwagger "github.com/swaggo/http-swagger/v2"
@@ -67,6 +69,10 @@ func Routes() http.Handler {
 			r.Post("/", handlers.CreateUser)
 			r.Get("/{email}", handlers.FindUserByEmail)
 			r.Put("/", handlers.UpdateUserByEmail)
+
+			//Rate limit by IP for 3 requests per 30 minutes
+			r.With(httprate.LimitByIP(3, 30*time.Minute)).Post("/check-password", handlers.CheckUserPassword)
+
 		})
 	})
 

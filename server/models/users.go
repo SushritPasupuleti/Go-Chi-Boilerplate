@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gofrs/uuid"
+	"server/helpers"
 )
 
 type User struct {
@@ -26,12 +27,23 @@ func (u *User) Create(user User) (*User, error) {
 	// Check if user already exists
 	dupe, err := u.FindByEmail(user.Email)
 
+	if err != nil {
+		log.Error().Err(err).Msg("Error finding user")
+		return nil, errors.New("Error finding user")
+	}
+
 	if dupe != nil {
 		return nil, errors.New("User already exists")
 	}
 
 	// Create user
-	//TODO: Hash password
+	hasedPassword, err := helpers.HashPassword(user.Password)
+	if err != nil {
+		log.Error().Err(err).Msg("Error hashing password")
+		return nil, err
+	}
+
+	user.Password = hasedPassword
 
 	query := `INSERT INTO users (name, email, password, created_at, updated_at) VALUES ($1, $2, $3, $4, $5) RETURNING *`
 

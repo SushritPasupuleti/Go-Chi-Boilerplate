@@ -21,6 +21,8 @@ type UserAuth struct {
 	Scope    string `json:"scope,omitempty"`
 }
 
+var userModel models.User
+
 // Generates a JWT token for the user
 func GenerateToken(w http.ResponseWriter, r *http.Request) {
 	var user UserAuth
@@ -58,15 +60,29 @@ func GenerateToken(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	//TODO: implement user validation from database
-	if len(user.Username) > 0 && len(user.Password) > 0 {
+	current_user, err := userModel.FindByEmail(user.Username)
+	if err != nil {
+		log.Error().Err(err).Msg("Error finding user")
+		helpers.ErrorJSON(w, err, http.StatusInternalServerError)
+		return
+	}
+
+	//validate user credentials
+	verified := helpers.ComparePasswords(current_user.Password, user.Password)
+	if !verified {
+		helpers.ErrorJSON(w, errors.New("Invalid Credentials Passed"), http.StatusBadRequest)
+		return
+	}
+
+	// roles := []string{current_user.UserRole}
+
+	if verified {
 		//create token
 		var token models.JWTClaims = models.JWTClaims{
 			Email: user.Username,
 			AppMetadata: models.AppMetadata{
 				Authorization: models.Authorization{
-					//TODO: Add roles from database
-					Roles: []string{"user"},
+					// Roles: roles,
 				},
 			},
 			Subject:    user.Username,
@@ -101,10 +117,9 @@ func GenerateToken(w http.ResponseWriter, r *http.Request) {
 			RefreshToken: "",
 		}
 
-		helpers.WriteJSON(w, http.StatusOK, response)
+		_ = helpers.WriteJSON(w, http.StatusOK, response)
 		return
 	}
 
 	helpers.ErrorJSON(w, errors.New("Invalid Credentials Passed"), http.StatusBadRequest)
-	return
 }

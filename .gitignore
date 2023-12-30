@@ -24,3 +24,4 @@ go.work
 server/bin
 server/tmp
 tmp
+.do_tasks

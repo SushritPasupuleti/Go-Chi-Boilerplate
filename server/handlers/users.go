@@ -13,6 +13,7 @@ import (
 	// "io/ioutil"
 	"net/http"
 
+	"server/authentication"
 	"server/helpers"
 	"server/middleware"
 	"server/models"
@@ -168,6 +169,8 @@ func FindUserByEmail(w http.ResponseWriter, r *http.Request) {
 //	@Tags         users
 //	@Accept       json
 //	@Produce      json
+//	@Param email path string true "Email"
+//	@Param user body models.User true "User"
 //	@Router       /api/v1/users [put]
 //	@Success 200 {object} models.User
 //	@Failure 500 {object} string
@@ -217,5 +220,72 @@ func UpdateUserByEmail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	helpers.WriteJSON(w, http.StatusOK, user)
+	_ = helpers.WriteJSON(w, http.StatusOK, user)
+}
+
+// Check User Password
+//
+//	@Summary      Check User Password
+//	@Description  Check User Password. Rate limited by IP for 3 requests per 30 minutes.
+//	@Tags         users
+//	@Accept       json
+//	@Produce      json
+//	@Param userAuthData body authentication.UserAuth true "UserAuth"
+//	@Router       /api/v1/users/check-password [post]
+//	@Success 200 {object} string
+//	@Failure 400 {object} string
+//	@Failure 429 {object} string
+func CheckUserPassword(w http.ResponseWriter, r *http.Request) {
+	var userAuthData authentication.UserAuth
+
+	err := json.NewDecoder(r.Body).Decode(&userAuthData)
+
+	if err != nil {
+		log.Error().Err(err).Msg("Error decoding JSON")
+		helpers.ErrorJSON(w, errors.New("Invalid JSON"), http.StatusBadRequest)
+		return
+	}
+
+	validate := validator.New()
+
+	err = validate.Struct(userAuthData)
+
+	var validationErrors []string
+
+	if err != nil {
+
+		for _, err := range err.(validator.ValidationErrors) {
+			log.Error().Err(err).Msg("Error validating user")
+
+			validationErrors = append(validationErrors, err.Error())
+		}
+
+		if len(validationErrors) > 0 {
+
+			var errorMessages string
+
+			for _, err := range validationErrors {
+				errorMessages += err + "\n"
+			}
+
+			helpers.ErrorJSON(w, errors.New(errorMessages), http.StatusBadRequest)
+			return
+		}
+	}
+
+	currentUser, err := user.FindByEmail(userAuthData.Username)
+	if err != nil {
+		log.Error().Err(err).Msg("Error finding user")
+		helpers.ErrorJSON(w, errors.New("No user found"), http.StatusInternalServerError)
+		return
+	}
+
+	//validate user credentials
+	verified := helpers.ComparePasswords(currentUser.Password, userAuthData.Password)
+	if !verified {
+		helpers.ErrorJSON(w, errors.New("Invalid Credentials Passed"), http.StatusBadRequest)
+		return
+	}
+
+	_ = helpers.WriteJSON(w, http.StatusOK, "Password Verified")
 }
