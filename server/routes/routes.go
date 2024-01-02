@@ -4,6 +4,7 @@ package routes
 import (
 	"fmt"
 	"time"
+
 	// "log"
 	"net/http"
 	// "os"
@@ -13,6 +14,7 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/go-chi/httprate"
 	"github.com/go-chi/jwtauth/v5"
+	"github.com/unrolled/secure"
 
 	// "github.com/go-chi/oauth"
 
@@ -20,6 +22,7 @@ import (
 
 	authentication "server/authentication"
 	"server/authorization"
+	"server/env"
 	"server/handlers"
 	middlewareCustom "server/middleware"
 
@@ -35,7 +38,19 @@ func init() {
 
 // Returns a router with all routes configured
 func Routes() http.Handler {
+
+	//INFO: Refer [to](https://github.com/unrolled/secure?tab=readme-ov-file#default-options)
+	secureMiddleware := secure.New(secure.Options{
+		IsDevelopment:      env.DefaultConfig.ENVIRONMENT == "development",
+		AllowedHosts:       []string{"localhost:5000", "localhost:3000"},
+		FrameDeny:          true,
+		ContentTypeNosniff: true,
+		BrowserXssFilter:   true,
+		ContentSecurityPolicy: "default-src 'self'",
+	})
+
 	router := chi.NewRouter()
+	router.Use(secureMiddleware.Handler)
 	router.Use(middleware.Recoverer)
 	router.Use(middleware.Logger)
 	router.Use(cors.Handler(cors.Options{

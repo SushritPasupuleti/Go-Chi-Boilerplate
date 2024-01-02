@@ -73,7 +73,7 @@ func GetCache(key string) (string, error) {
 		return "", nil
 	}
 
-	log.Info().Msgf("value: %v", value)
+	// log.Info().Msgf("value: %v", value)
 
 	return value, nil
 }

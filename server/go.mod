@@ -63,6 +63,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/redis/go-redis/v9 v9.2.0
 	github.com/rs/zerolog v1.30.0
+	github.com/unrolled/secure v1.14.0
 	golang.org/x/crypto v0.10.0 // indirect
 	golang.org/x/text v0.10.0 // indirect
 )

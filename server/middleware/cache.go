@@ -34,14 +34,14 @@ func PrepareCacheKey(payload interface{}, routeKey string) (string, error) {
 
 	stringPayload = string(byteData)
 
-	log.Info().Msgf("stringPayload: %s", stringPayload)
+	// log.Info().Msgf("stringPayload: %s", stringPayload)
 
 	//base64 encode the string
 	encodedPayload := base64.StdEncoding.EncodeToString([]byte(stringPayload))
 
 	encodedPayload = routeKey + "." + encodedPayload
 
-	log.Info().Msgf("encodedPayload: %s", encodedPayload)
+	// log.Info().Msgf("encodedPayload: %s", encodedPayload)
 
 	return encodedPayload, nil
 }
@@ -56,7 +56,7 @@ func StringifyResponse(response interface{}) (string, error) {
 		return "", err
 	}
 
-	log.Info().Msgf("stringResponse: %s", string(stringResponse))
+	// log.Info().Msgf("stringResponse: %s", string(stringResponse))
 
 	return string(stringResponse), nil
 }
@@ -97,7 +97,7 @@ func SaveToCache(r *http.Request, response interface{}) (string, error) {
 		return "", err
 	}
 
-	log.Info().Msgf("Successfully saved to cache: %s", cacheKey)
+	// log.Info().Msgf("Successfully saved to cache: %s", cacheKey)
 
 	return cacheKey, nil
 }
@@ -118,7 +118,7 @@ func CachedResponseToJSON(cacheKey string) ([]map[string]interface{}, error) {
 		return nil, nil
 	}
 
-	log.Info().Msgf("cachedResponse: %s", cachedResponse)
+	// log.Info().Msgf("cachedResponse: %s", cachedResponse)
 
 	var cachedResponseJSON []map[string]interface{}
 	// var cachedResponseJSON interface{}
@@ -130,7 +130,7 @@ func CachedResponseToJSON(cacheKey string) ([]map[string]interface{}, error) {
 		return nil, err
 	}
 
-	log.Info().Msgf("cachedResponseJSON: %v", cachedResponseJSON)
+	// log.Info().Msgf("cachedResponseJSON: %v", cachedResponseJSON)
 	// log.Info().Msgf("cachedResponseJSON: %t", cachedResponseJSON)
 
 	return cachedResponseJSON, nil
@@ -164,13 +164,13 @@ func CacheMiddleware(ttl time.Duration) func(http.Handler) http.Handler {
 			}
 
 			if cachedResponseJSON == nil {
-				log.Info().Msgf("No cached response found for %s", cacheKey)
+				// log.Info().Msgf("No cached response found for %s", cacheKey)
 				// return
 				next.ServeHTTP(w, r)
 			}
 
 			if len(cachedResponseJSON) > 0 {
-				log.Info().Msgf("Sending CachedResponse %v", cachedResponseJSON)
+				// log.Info().Msgf("Sending CachedResponse %v", cachedResponseJSON)
 				helpers.WriteJSON(w, http.StatusOK, cachedResponseJSON)
 				return
 			}
