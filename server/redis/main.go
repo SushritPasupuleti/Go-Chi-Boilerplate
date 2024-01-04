@@ -77,3 +77,17 @@ func GetCache(key string) (string, error) {
 
 	return value, nil
 }
+
+// Delete a Key, Value pair from Redis
+func DeleteCache(key string) error {
+	deleted, err := redisClient.Del(ctx, key).Result()
+
+	if err != nil {
+		log.Error().Err(err).Msg("Error deleting key")
+		return err
+	}
+
+	log.Info().Msgf("deleted: %v", deleted)
+
+	return nil
+}

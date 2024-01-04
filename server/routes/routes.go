@@ -66,6 +66,8 @@ func Routes() http.Handler {
 	router.Group(func(r chi.Router) {
 		router.Route("/oauth", func(r chi.Router) {
 			r.Post("/token", authentication.GenerateToken)
+			r.Get("/token/refresh", authentication.RefreshToken)
+			r.Post("/token/revoke", authentication.RevokeToken)
 		})
 	})
 
