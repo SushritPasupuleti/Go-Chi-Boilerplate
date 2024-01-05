@@ -41,11 +41,11 @@ func Routes() http.Handler {
 
 	//INFO: Refer [to](https://github.com/unrolled/secure?tab=readme-ov-file#default-options)
 	secureMiddleware := secure.New(secure.Options{
-		IsDevelopment:      env.DefaultConfig.ENVIRONMENT == "development",
-		AllowedHosts:       []string{"localhost:5000", "localhost:3000"},
-		FrameDeny:          true,
-		ContentTypeNosniff: true,
-		BrowserXssFilter:   true,
+		IsDevelopment:         env.DefaultConfig.ENVIRONMENT == "development",
+		AllowedHosts:          []string{"localhost:5000", "localhost:3000"},
+		FrameDeny:             true,
+		ContentTypeNosniff:    true,
+		BrowserXssFilter:      true,
 		ContentSecurityPolicy: "default-src 'self'",
 	})
 
@@ -65,9 +65,9 @@ func Routes() http.Handler {
 	// OAuth2 INFO: Should be run as a separate service in production
 	router.Group(func(r chi.Router) {
 		router.Route("/oauth", func(r chi.Router) {
-			r.Post("/token", authentication.GenerateToken)
-			r.Get("/token/refresh", authentication.RefreshToken)
-			r.Post("/token/revoke", authentication.RevokeToken)
+			r.With(httprate.LimitByIP(3, 30*time.Minute)).Post("/token", authentication.GenerateToken)
+			r.With(httprate.LimitByIP(3, 30*time.Minute)).Get("/token/refresh", authentication.RefreshToken)
+			r.With(httprate.LimitByIP(3, 30*time.Minute)).Post("/token/revoke", authentication.RevokeToken)
 		})
 	})
 

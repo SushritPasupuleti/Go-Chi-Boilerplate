@@ -273,7 +273,7 @@ func CheckUserPassword(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	currentUser, err := user.FindByEmail(userAuthData.Username)
+	currentUser, err := user.FindByEmail(userAuthData.UserName)
 	if err != nil {
 		log.Error().Err(err).Msg("Error finding user")
 		helpers.ErrorJSON(w, errors.New("No user found"), http.StatusInternalServerError)
