@@ -5,10 +5,12 @@ help:
 	@echo ""
 	@echo "Targets:"
 	@echo "  run              	Run server"
+	@echo "  setup            	Install pre-requisites"
 	@echo "  build            	Build Binaries for linux, windows and mac"
 	@echo "  run_build        	Run server from build"
 	@echo "  test             	Run tests"
 	@echo "  lint             	Run linter"
+	@echo "  nilaway          	Run nilaway"
 	@echo "  migrate_new      	Create new migration"
 	@echo "  migrate_up       	Apply pending migrations"
 	@echo "  packages_install 	Install packages"
@@ -21,6 +23,9 @@ help:
 run:
 	@echo "Running server..."
 	@go run main.go
+
+setup:
+	@go install go.uber.org/nilaway/cmd/nilaway@latest
 
 build:
 	@echo "Building server..."
@@ -41,6 +46,10 @@ test:
 lint:
 	@echo "Running linter..."
 	@golangci-lint run
+
+nilaway:
+	@echo "Running nilaway..."
+	@nilaway ../server/
 
 migrate_new:
 	@echo "Creating new migration..."

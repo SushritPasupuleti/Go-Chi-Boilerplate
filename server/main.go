@@ -64,6 +64,8 @@ func main() {
 		log.Fatal().
 			Err(err).
 			Msg("Error connecting to database")
+
+		panic("Error connecting to database")
 	}
 
 	defer dbConn.DB.Close()

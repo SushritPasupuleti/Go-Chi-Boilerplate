@@ -1,5 +1,17 @@
 basePath: /
 definitions:
+  authentication.UserAuth:
+    properties:
+      password:
+        type: string
+      scope:
+        type: string
+      username:
+        type: string
+    required:
+    - password
+    - username
+    type: object
   models.User:
     properties:
       created_at:
@@ -14,6 +26,10 @@ definitions:
         type: string
       updated_at:
         type: string
+    required:
+    - email
+    - name
+    - password
     type: object
 host: localhost:5000
 info:
@@ -72,6 +88,18 @@ paths:
       consumes:
       - application/json
       description: Update User By Email
+      parameters:
+      - description: Email
+        in: path
+        name: email
+        required: true
+        type: string
+      - description: User
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
       produces:
       - application/json
       responses:
@@ -109,6 +137,36 @@ paths:
           schema:
             type: string
       summary: Find User By Email
+      tags:
+      - users
+  /api/v1/users/check-password:
+    post:
+      consumes:
+      - application/json
+      description: Check User Password. Rate limited by IP for 3 requests per 30 minutes.
+      parameters:
+      - description: UserAuth
+        in: body
+        name: userAuthData
+        required: true
+        schema:
+          $ref: '#/definitions/authentication.UserAuth'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "429":
+          description: Too Many Requests
+          schema:
+            type: string
+      summary: Check User Password
       tags:
       - users
 swagger: "2.0"
